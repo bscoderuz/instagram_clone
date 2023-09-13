@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 from decouple import config
-import psycopg2
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'rest_framework_simplejwt',
     'users',
@@ -48,7 +48,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR, 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -66,14 +66,21 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': config("DB_NAME"),
+#         "USER": config("USER"),
+#         "PASSWORD": config("PASSWORD"),
+#         "HOST": config('HOST'),
+#         "POST": config("PORT"),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config("DB_NAME"),
-        "USER": config("USER"),
-        "PASSWORD": config("PASSWORD"),
-        "HOST": config('HOST'),
-        "POST": config("PORT"),
+        'ENGINE': 'django.db.backends.sqlite3',  # Example with SQLite
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),  # Path to your database file
     }
 }
 
