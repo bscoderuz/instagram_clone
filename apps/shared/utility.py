@@ -1,29 +1,28 @@
 import re
 import threading
 
+import phonenumbers
+from decouple import config
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from rest_framework.exceptions import ValidationError
+from phonenumbers import NumberParseException
+from twilio.rest import Client
 
-email_regex = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b")
-phone_regex = re.compile(r"(\+[0-9]+\s*)?(\([0-9]+\))?[\s0-9\-]+[0-9]+")
+email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
 
 
 def check_email_or_phone(email_or_phone):
+    try:
+        phone_number = phonenumbers.parse(email_or_phone)
+    except NumberParseException:
+        phone_number = None
+
     if re.fullmatch(email_regex, email_or_phone):
-        email_or_phone = "email"
-
-    elif re.fullmatch(phone_regex, email_or_phone):
-        email_or_phone = 'phone'
-
+        return "email"
+    elif phone_number and phonenumbers.is_valid_number(phone_number):
+        return "phone"
     else:
-        data = {
-            "success": False,
-            "message": "Email yoki telefon raqamingiz notogri"
-        }
-        raise ValidationError(data)
-
-    return email_or_phone
+        raise ValueError("Email yoki telefon raqamingiz notog'ri")
 
 
 class EmailThread(threading.Thread):
@@ -61,4 +60,15 @@ def send_email(email, code):
             'body': html_content,
             'content_type': '"html'
         }
+    )
+
+
+def send_phone_code(phone, code):
+    account_sid = config('account_sid')
+    auth_token = config('auth_token')
+    client = Client(account_sid, auth_token)
+    client.messages.create(
+        body=f"Salom! Sizning tasdiqlash kodingiz: {code}\n",
+        from_="+99895005050",
+        to=f"{phone}"
     )

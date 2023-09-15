@@ -66,7 +66,7 @@ class User(AbstractUser, BaseModel):
 
     def check_email(self):
         if self.email:
-            normalize_email = self.email.lover()
+            normalize_email = self.email.lower()
             self.email = normalize_email
 
     def check_pass(self):
@@ -92,8 +92,7 @@ class User(AbstractUser, BaseModel):
         self.hashing_password()
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.clean()
+        self.clean()
         super(User, self).save(*args, **kwargs)
 
 
@@ -116,10 +115,9 @@ class UserConfirmation(BaseModel):
         return str(self.user.__str__())
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            if self.verify_type == VIA_EMAIL:
-                self.expiration_time = datetime.now() + timedelta(minutes=EMAIL_EXPIRE)
-            else:
-                self.expiration_time = datetime.now() + timedelta(minutes=PHONE_EXPIRE)
+        if self.verify_type == VIA_EMAIL:
+            self.expiration_time = datetime.now() + timedelta(minutes=EMAIL_EXPIRE)
+        else:
+            self.expiration_time = datetime.now() + timedelta(minutes=PHONE_EXPIRE)
 
         super(UserConfirmation, self).save(*args, **kwargs)
