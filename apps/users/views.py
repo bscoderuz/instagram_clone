@@ -1,14 +1,14 @@
 from django.utils.datetime_safe import datetime
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import DONE, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 from .models import User
-from .serializers import SignUpSerializer
+from .serializers import SignUpSerializer, ChangeUserInformation
 from apps.shared.utility import send_email
 
 
@@ -52,6 +52,7 @@ class VerifyAPIView(APIView):
 
 
 class GetNewVerification(APIView):
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
@@ -74,7 +75,6 @@ class GetNewVerification(APIView):
             }
         )
 
-
     @staticmethod
     def check_verification(user):
         verifies = user.verify_codes.filter(expiration_time__gte=datetime.now(), is_confirmed=False)
@@ -84,3 +84,29 @@ class GetNewVerification(APIView):
             }
             raise ValidationError(data)
 
+
+class ChangeUserInformationAPIView(UpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangeUserInformation
+    http_method_names = ['patch', 'put']
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        super(ChangeUserInformationAPIView, self).update(request, *args, **kwargs)
+        data = {
+            'success': True,
+            'message': "User updated successfully",
+            'auth_status': self.request.user.auth_status
+        }
+        return Response(data, status=200)
+
+    def partial_update(self, request, *args, **kwargs):
+        super(ChangeUserInformationAPIView, self).update(request, *args, **kwargs)
+        data = {
+            'success': True,
+            'message': "User updated successfully",
+            'auth_status': self.request.user.auth_status
+        }
+        return Response(data, status=200)
