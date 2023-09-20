@@ -6,9 +6,11 @@ from decouple import config
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from phonenumbers import NumberParseException
+from rest_framework.exceptions import ValidationError
 from twilio.rest import Client
 
 email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+username_regex = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 
 def check_email_or_phone(email_or_phone):
@@ -19,10 +21,33 @@ def check_email_or_phone(email_or_phone):
 
     if re.fullmatch(email_regex, email_or_phone):
         return "email"
+
     elif phone_number and phonenumbers.is_valid_number(phone_number):
         return "phone"
+
     else:
         raise ValueError("Email yoki telefon raqamingiz notog'ri")
+
+
+def check_user_type(user_input):
+    try:
+        phone_number = phonenumbers.parse(user_input)
+    except NumberParseException:
+        phone_number = None
+
+    if re.fullmatch(email_regex, user_input):
+        user_input = "email"
+    elif phone_number and phonenumbers.is_valid_number(phone_number):
+        user_input = "phone"
+    elif re.fullmatch(username_regex, user_input):
+        user_input = "username"
+    else:
+        data = {
+            "success": False,
+            "message": "Email, username yoki telefon raqamingiz noto'g'ri"
+        }
+        raise ValidationError(data)
+    return user_input
 
 
 class EmailThread(threading.Thread):
