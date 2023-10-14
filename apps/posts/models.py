@@ -12,15 +12,17 @@ User = get_user_model()
 
 class Post(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    image = models.CharField(upload_to='post_images', validators=[
-        FileExtensionValidator(allowed_extensions=['jpeg', 'jpg', 'png'])
-    ])
+    image = models.ImageField(upload_to='post_images', validators=[
+        FileExtensionValidator(allowed_extensions=['jpeg', 'jpg', 'png'])])
     caption = models.TextField(validators=[MaxLengthValidator(2000)])
 
     class Meta:
         db_table = 'posts'
         verbose_name = 'post'
         verbose_name_plural = 'posts'
+
+    def __str__(self):
+        return f"{self.author} post about {self.caption}"
 
 
 class PostComment(BaseModel):
@@ -35,6 +37,9 @@ class PostComment(BaseModel):
         blank=True
     )
 
+    def __str__(self):
+        return f"comment by {self.author}"
+
 
 class PostLike(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -43,7 +48,8 @@ class PostLike(BaseModel):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=['author', 'post']
+                fields=['author', 'post'],
+                name='PostLikeUnique'
             )
         ]
 
@@ -55,6 +61,7 @@ class CommentLike(BaseModel):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=['author', 'comment']
+                fields=['author', 'comment'],
+                name='CommentLikeUnique'
             )
         ]
